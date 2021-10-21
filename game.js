@@ -25,20 +25,27 @@ app.innerHTML = board.join("");
 const boardSquares = Array.from(document.querySelectorAll(".square"));
 
 boardSquares.forEach((node, idx) => {
-  if (idx % 3 === 0) {
-    node.classList.add("column1");
-  } else if ((idx + 1) % 3 === 0) {
-    node.classList.add("column3");
-  } else {
-    node.classList.add("column2");
+  let columnClass = "column";
+
+  switch (true) {
+    case idx % 3 === 0:
+      columnClass += 1;
+      break;
+    case (idx + 1) % 3 === 0:
+      columnClass += 2;
+      break;
+    default:
+      columnClass += 3;
   }
+
+  node.classList.add(columnClass);
 });
 
 /////////////////////
 /* GAME PLAY LOGIC */
 /////////////////////
 
-const clickHandler = (event) => {
+const clickHandler = (e) => {
   if (myShotClockInterval) {
     shotClock = 15;
     clearInterval(myShotClockInterval);
@@ -48,24 +55,16 @@ const clickHandler = (event) => {
     timer.innerText = shotClock;
     shotClock--;
     if (shotClock === 0) {
-      endGame("Sorry, too slow :/ you have lost :(");
+      endGame("Sorry, too slow :/ you have lost");
     }
   }, 1000);
 
-  const node = event.target;
-
-  if (node.innerText) {
+  if (e.target.innerText) {
     return;
   }
 
-  let move;
-  if (turn % 2 === 0) {
-    move = "X";
-  } else {
-    move = "O";
-  }
-
-  node.innerText = move;
+  const move = turn % 2 === 0 ? "X" : "O";
+  e.target.innerText = move;
   turn++;
 
   winOrStalemate();
@@ -77,6 +76,28 @@ app.addEventListener("click", clickHandler);
 /* Game Win Logic */
 ////////////////////
 
+// helpers for finding wins
+const allX = (combo) => {
+  for (let i = 0; i < combo.length; i++) {
+    const currNode = combo[i];
+    if (currNode.innerText === "O" || currNode.innerText === "") {
+      return false;
+    }
+  }
+  return true;
+};
+
+const allO = (combo) => {
+  for (let i = 0; i < combo.length; i++) {
+    const currNode = combo[i];
+    if (currNode.innerText === "X" || currNode.innerText === "") {
+      return false;
+    }
+  }
+  return true;
+};
+
+// check whether game is won or no turns remain (stalemate)
 function winOrStalemate() {
   // build rows
   const rows = [
@@ -104,35 +125,12 @@ function winOrStalemate() {
   // if any are a win, end game, else play until stalemate
   [rows, columns, diagonals].forEach((category) => {
     category.forEach((combination) => {
-      const allX = (combo) => {
-        for (let i = 0; i < combo.length; i++) {
-          const currNode = combo[i];
-          if (currNode.innerText === "O" || currNode.innerText === "") {
-            return false;
-          }
-        }
-        return true;
-      };
-
-      const allO = (combo) => {
-        for (let i = 0; i < combo.length; i++) {
-          const currNode = combo[i];
-          if (currNode.innerText === "X" || currNode.innerText === "") {
-            return false;
-          }
-        }
-        return true;
-      };
-
-      let won = false;
-      won = allX(combination) || allO(combination);
+      const won = allX(combination) || allO(combination);
 
       if (won) {
         const player = turn % 2 === 0 ? "O" : "X";
         endGame(`Player ${player} won!`);
-      }
-
-      if (turn === 9) {
+      } else if (turn === 9) {
         endGame("Stalemate!");
       }
     });
