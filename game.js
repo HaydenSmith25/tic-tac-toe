@@ -97,6 +97,15 @@ const allO = (combo) => {
   return true;
 };
 
+// end game helper function
+const endGame = (message) => {
+  gameMsg.innerText = message;
+  clearInterval(myShotClockInterval);
+  document.getElementById("timeLeftMsg").innerText = "";
+  timer.innerText = "";
+  app.removeEventListener("click", clickHandler);
+};
+
 // check whether game is won or no turns remain (stalemate)
 function winOrStalemate() {
   // build rows
@@ -135,13 +144,4 @@ function winOrStalemate() {
       }
     });
   });
-}
-
-// end game helper function
-function endGame(message) {
-  gameMsg.innerText = message;
-  clearInterval(myShotClockInterval);
-  document.getElementById("timeLeftMsg").innerText = "";
-  timer.innerText = "";
-  app.removeEventListener("click", clickHandler);
 }
