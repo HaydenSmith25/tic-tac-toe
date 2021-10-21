@@ -15,7 +15,7 @@ const gameMsg = document.getElementById("gameMsg");
 const timer = document.getElementById("timer");
 timer.innerText = String(shotClock);
 
-const board = new Array(9).fill(null).map((val, idx) => {
+const board = new Array(9).fill(null).map((_, idx) => {
   return `<div class="square" id="${"square-" + (idx + 1)}"></div>`;
 });
 
