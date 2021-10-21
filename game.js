@@ -1,11 +1,18 @@
+/////////////////
+/* GLOBAL VARS */
+/////////////////
+
 let turn = 0;
 let shotClock = 15;
 let myShotClockInterval;
 
+//////////////////
+/* DOM HANDLING */
+//////////////////
+
 const gameMsg = document.getElementById("gameMsg");
 
 const timer = document.getElementById("timer");
-
 timer.innerText = String(shotClock);
 
 const board = new Array(9).fill(null).map((val, idx) => {
@@ -27,11 +34,11 @@ boardSquares.forEach((node, idx) => {
   }
 });
 
-// in order to delegate these events
-// we're going to attach ONE event listener to a DOM node that's a parent to all of them
-// (at least) >> we could attach it even higher...
+/////////////////////
+/* GAME PLAY LOGIC */
+/////////////////////
 
-app.addEventListener("click", (event) => {
+const clickHandler = (event) => {
   if (myShotClockInterval) {
     shotClock = 15;
     clearInterval(myShotClockInterval);
@@ -41,8 +48,7 @@ app.addEventListener("click", (event) => {
     timer.innerText = shotClock;
     shotClock--;
     if (shotClock === 0) {
-      gameMsg.innerText = "Sorry, too slow :/ you have lost :(";
-      clearInterval(myShotClockInterval);
+      endGame("Sorry, too slow :/ you have lost :(");
     }
   }, 1000);
 
@@ -52,71 +58,60 @@ app.addEventListener("click", (event) => {
     return;
   }
 
-  // we setup a way to store and apply moves based on clicks
   let move;
-
   if (turn % 2 === 0) {
     move = "X";
   } else {
     move = "O";
   }
 
-  // we modify the current node by adding its move to the node's .innerText property
   node.innerText = move;
   turn++;
 
-  // check if anyone won
-  didWin();
-});
+  winOrStalemate();
+};
 
-// we need to know if any 3 squares vertical, horizontal, or diagonal constitute a win
-// meaning that they all have the same value as their innerText
+app.addEventListener("click", clickHandler);
 
-function didWin() {
-  // naively we know that there are only 8 ways to win
-  // so let's just run each scenario and check if a win occurred
+////////////////////
+/* Game Win Logic */
+////////////////////
 
+function winOrStalemate() {
+  // build rows
   const rows = [
     [...boardSquares.slice(0, 3)],
     [...boardSquares.slice(3, 6)],
     [...boardSquares.slice(6)],
   ];
 
+  // build columns
   const column1 = Array.from(document.querySelectorAll(".column1"));
   const column2 = Array.from(document.querySelectorAll(".column2"));
   const column3 = Array.from(document.querySelectorAll(".column3"));
-
   const columns = [column1, column2, column3];
 
+  // build diagonals
   const diagonal1 = Array.from(
     document.querySelectorAll("#square-1, #square-5, #square-9")
   );
-
   const diagonal2 = Array.from(
     document.querySelectorAll("#square-3, #square-5, #square-7")
   );
-
   const diagonals = [diagonal1, diagonal2];
 
+  // evaluate each scenario's nodes
+  // if any are a win, end game, else play until stalemate
   [rows, columns, diagonals].forEach((category) => {
-    // does each node in each array in the category have the same innerText value?
-
     category.forEach((combination) => {
-      // combination looks like this [ node1, node2, node3 ]
-      // each of node1-3 is a DOM node or object in the Document Object Model
-
       const allX = (combo) => {
-        let result = true;
-
         for (let i = 0; i < combo.length; i++) {
           const currNode = combo[i];
-
           if (currNode.innerText === "O" || currNode.innerText === "") {
-            result = false;
+            return false;
           }
         }
-
-        return result;
+        return true;
       };
 
       const allO = (combo) => {
@@ -130,18 +125,25 @@ function didWin() {
       };
 
       let won = false;
-
       won = allX(combination) || allO(combination);
 
-      // now we know whether somebody won or not
-      // IF we have winner, let's update that DOM node that contains our winning message
-
       if (won) {
-        gameMsg.innerText = "You won!";
-        clearInterval(myShotClockInterval);
-        document.getElementById("timeLeftMsg").innerText = "";
-        timer.innerText = "";
+        const player = turn % 2 === 0 ? "O" : "X";
+        endGame(`Player ${player} won!`);
+      }
+
+      if (turn === 9) {
+        endGame("Stalemate!");
       }
     });
   });
+}
+
+// end game helper function
+function endGame(message) {
+  gameMsg.innerText = message;
+  clearInterval(myShotClockInterval);
+  document.getElementById("timeLeftMsg").innerText = "";
+  timer.innerText = "";
+  app.removeEventListener("click", clickHandler);
 }
